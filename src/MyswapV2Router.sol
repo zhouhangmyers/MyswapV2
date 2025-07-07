@@ -2,20 +2,18 @@
 pragma solidity ^0.8.26;
 
 import {IMyswapV2Pair} from "./interfaces/IMyswapV2Pair.sol";
-import {MyswapV2Pair} from "./MyswapV2Pair.sol";
+import {IMyswapV2ERC20} from "./interfaces/IMyswapV2ERC20.sol";
 import {IMyswapV2Factory} from "./interfaces/IMyswapV2Factory.sol";
 import {MyswapV2Library} from "./libraries/MyswapV2Library.sol";
-import {IERC20} from "@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol";
-import {SafeERC20} from "@openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
-import {WETH9} from "../test/mocks/WETH9.sol";
-import {SafeTransferLib} from "lib/solmate/src/utils/SafeTransferLib.sol";
+import {IWETH} from "./interfaces/IWETH.sol";
+import {SafeTransferLib, IERC20} from "./libraries/SafeTransferLib.sol";
+
 /**
  * @title Modern UniswapV2 Rewrite | 现代uniswapv2重写
  * @author HangZhou | 周航
  * @notice A complete reimplementation of the Uniswap V2 protocol using Solidity ^0.8.26.| 一个使用Solidity ^0.8.26完全重新实现的Uniswap V2协议。
  * @dev This project is independently written from scratch without forking the original codebase. | 该项目完全独立编写，未从原始代码库进行分支。
  */
-
 contract MyswapV2Router {
     address public immutable factory;
     address payable public immutable WETH;
@@ -80,8 +78,8 @@ contract MyswapV2Router {
     ) external virtual ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (amountA, amountB) = _addLiquidity(tokenA, tokenB, amountADesired, amountBDesired, amountAMin, amountBMin);
         address pair = MyswapV2Library.pairFor(factory, tokenA, tokenB);
-        SafeERC20.safeTransferFrom(IERC20(tokenA), msg.sender, pair, amountA);
-        SafeERC20.safeTransferFrom(IERC20(tokenB), msg.sender, pair, amountB);
+        SafeTransferLib.safeTransferFrom(IERC20(tokenA), msg.sender, pair, amountA);
+        SafeTransferLib.safeTransferFrom(IERC20(tokenB), msg.sender, pair, amountB);
         liquidity = IMyswapV2Pair(pair).mint(to);
     }
 
@@ -97,9 +95,9 @@ contract MyswapV2Router {
             _addLiquidity(token, WETH, amountTokenDesired, msg.value, amountTokenMin, amountETHMin);
 
         address pair = MyswapV2Library.pairFor(factory, token, WETH);
-        SafeERC20.safeTransferFrom(IERC20(token), msg.sender, pair, amountToken);
-        WETH9(WETH).deposit{value: amountETH}();
-        assert(WETH9(WETH).transfer(pair, amountETH));
+        SafeTransferLib.safeTransferFrom(IERC20(token), msg.sender, pair, amountToken);
+        IWETH(WETH).deposit{value: amountETH}();
+        assert(IWETH(WETH).transfer(pair, amountETH));
         liquidity = IMyswapV2Pair(pair).mint(to);
         if (msg.value > amountETH) SafeTransferLib.safeTransferETH(msg.sender, msg.value - amountETH);
     }
@@ -117,7 +115,7 @@ contract MyswapV2Router {
         uint256 deadline
     ) public virtual ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         address pair = MyswapV2Library.pairFor(factory, tokenA, tokenB);
-        MyswapV2Pair(pair).transferFrom(msg.sender, pair, liquidity);
+        IMyswapV2ERC20(pair).transferFrom(msg.sender, pair, liquidity);
         (uint256 amount0, uint256 amount1) = IMyswapV2Pair(pair).burn(to);
         (address token0,) = MyswapV2Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = token0 == tokenA ? (amount0, amount1) : (amount1, amount0);
@@ -135,8 +133,8 @@ contract MyswapV2Router {
     ) public virtual ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
         (amountToken, amountETH) =
             removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
-        SafeERC20.safeTransfer(IERC20(token), to, amountToken);
-        WETH9(WETH).withdraw(amountETH);
+        SafeTransferLib.safeTransfer(IERC20(token), to, amountToken);
+        IWETH(WETH).withdraw(amountETH);
         SafeTransferLib.safeTransferETH(to, amountETH);
     }
 
@@ -155,7 +153,7 @@ contract MyswapV2Router {
     ) external virtual returns (uint256 amountA, uint256 amountB) {
         address pair = MyswapV2Library.pairFor(factory, tokenA, tokenB);
         uint256 value = approveMax ? type(uint256).max : liquidity;
-        MyswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IMyswapV2ERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountA, amountB) = removeLiquidity(tokenA, tokenB, liquidity, amountAMin, amountBMin, to, deadline);
     }
 
@@ -173,7 +171,7 @@ contract MyswapV2Router {
     ) external virtual returns (uint256 amountToken, uint256 amountETH) {
         address pair = MyswapV2Library.pairFor(factory, token, WETH);
         uint256 value = approveMax ? type(uint256).max : liquidity;
-        MyswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IMyswapV2ERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         (amountToken, amountETH) = removeLiquidityETH(token, liquidity, amountTokenMin, amountETHMin, to, deadline);
     }
 
@@ -186,8 +184,8 @@ contract MyswapV2Router {
         uint256 deadline
     ) public virtual ensure(deadline) returns (uint256 amountETH) {
         (, amountETH) = removeLiquidity(token, WETH, liquidity, amountTokenMin, amountETHMin, address(this), deadline);
-        SafeERC20.safeTransfer(IERC20(token), to, IERC20(token).balanceOf(address(this)));
-        WETH9(WETH).withdraw(amountETH);
+        SafeTransferLib.safeTransfer(IERC20(token), to, IERC20(token).balanceOf(address(this)));
+        IWETH(WETH).withdraw(amountETH);
         SafeTransferLib.safeTransferETH(to, amountETH);
     }
 
@@ -205,7 +203,7 @@ contract MyswapV2Router {
     ) external virtual returns (uint256 amountETH) {
         address pair = MyswapV2Library.pairFor(factory, token, WETH);
         uint256 value = approveMax ? type(uint256).max : liquidity;
-        MyswapV2Pair(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
+        IMyswapV2ERC20(pair).permit(msg.sender, address(this), value, deadline, v, r, s);
         amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
             token, liquidity, amountTokenMin, amountETHMin, to, deadline
         );
@@ -232,7 +230,7 @@ contract MyswapV2Router {
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
         amounts = MyswapV2Library.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
@@ -247,7 +245,7 @@ contract MyswapV2Router {
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, to);
@@ -263,8 +261,8 @@ contract MyswapV2Router {
         require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsOut(factory, msg.value, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
-        WETH9(WETH).deposit{value: amounts[0]}();
-        assert(WETH9(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
     }
 
@@ -278,11 +276,11 @@ contract MyswapV2Router {
         require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= amountInMax, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        WETH9(WETH).withdraw(amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         SafeTransferLib.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
@@ -296,11 +294,11 @@ contract MyswapV2Router {
         require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsOut(factory, amountIn, path);
         require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
         _swap(amounts, path, address(this));
-        WETH9(WETH).withdraw(amounts[amounts.length - 1]);
+        IWETH(WETH).withdraw(amounts[amounts.length - 1]);
         SafeTransferLib.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
@@ -314,8 +312,8 @@ contract MyswapV2Router {
         require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
         require(amounts[0] <= msg.value, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
-        WETH9(WETH).deposit{value: amounts[0]}();
-        assert(WETH9(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
+        IWETH(WETH).deposit{value: amounts[0]}();
+        assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
         // refund dust eth, if any
         if (msg.value > amounts[0]) SafeTransferLib.safeTransferETH(msg.sender, msg.value - amounts[0]);
@@ -351,7 +349,7 @@ contract MyswapV2Router {
         address to,
         uint256 deadline
     ) external virtual ensure(deadline) {
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn
         );
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
@@ -370,8 +368,8 @@ contract MyswapV2Router {
     ) external payable virtual ensure(deadline) {
         require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
         uint256 amountIn = msg.value;
-        WETH9(WETH).deposit{value: amountIn}();
-        assert(WETH9(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn));
+        IWETH(WETH).deposit{value: amountIn}();
+        assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn));
         uint256 balanceBefore = IERC20(path[path.length - 1]).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
@@ -388,13 +386,13 @@ contract MyswapV2Router {
         uint256 deadline
     ) external virtual ensure(deadline) {
         require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
-        SafeERC20.safeTransferFrom(
+        SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint256 amountOut = IERC20(WETH).balanceOf(address(this));
         require(amountOut >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
-        WETH9(WETH).withdraw(amountOut);
+        IWETH(WETH).withdraw(amountOut);
         SafeTransferLib.safeTransferETH(to, amountOut);
     }
 
