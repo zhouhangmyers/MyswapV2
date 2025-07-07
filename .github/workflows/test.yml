@@ -34,7 +34,12 @@ jobs:
           forge build --sizes
         id: build
 
+      - name: Export DEPLOYER_ADDRESS to environment
+        run: echo "DEPLOYER_ADDRESS=${{ vars.DEPLOYER_ADDRESS }}" >> $GITHUB_ENV
+
       - name: Run Forge tests
         run: |
           forge test -vvv
         id: test
+      
+
