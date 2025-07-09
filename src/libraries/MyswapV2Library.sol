@@ -4,12 +4,14 @@ pragma solidity ^0.8.26;
 import {MyswapV2Pair} from "../MyswapV2Pair.sol";
 /**
  * @title Modern UniswapV2 Rewrite | 现代uniswapv2重写
- * @author HangZhou | 周航
+ * @author @zhouhangmyers | 周航
  * @notice A complete reimplementation of the Uniswap V2 protocol using Solidity ^0.8.26.| 一个使用Solidity ^0.8.26完全重新实现的Uniswap V2协议。
  * @dev This project is independently written from scratch without forking the original codebase. | 该项目完全独立编写，未从原始代码库进行分支。
  */
 
 library MyswapV2Library {
+    error IDENTICAL_ADDRRESS();
+
     function sortTokens(address tokenA, address tokenB) internal pure returns (address token0, address token1) {
         require(tokenA != tokenB, "MyswapV2Library: IDENTICAL_ADDRRESS");
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
@@ -96,7 +98,7 @@ library MyswapV2Library {
         view
         returns (uint256[] memory amounts)
     {
-        require(path.length > 2, "MyswapV2Library: INVALID_PATH");
+        require(path.length >= 2, "MyswapV2Library: INVALID_PATH");
         amounts = new uint256[](path.length);
         amounts[path.length - 1] = amountOut;
         for (uint256 i = path.length - 1; i > 0; i--) {
