@@ -5,7 +5,7 @@ Solidity 版本：^0.8.26
 
 🛠️ 克隆与初始化项目
 # 1. 克隆本项目
-git clone https://github.com/zhouhangmyers/-UniswapV2.git
+git clone https://github.com/zhouhangmyers/MyswapV2.git
 
 # 2. 切换到项目目录
 cd mySwap
