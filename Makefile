@@ -3,11 +3,11 @@
 # Default target: initialize project
 default: install build test coverage coverage-html fmt
 
+# clean required dependencies lib
+
 # Install required dependencies
 install:
-	forge install transmissions11/solmate@v6
-	forge install OpenZeppelin/openzeppelin-contracts@v5.3.0 --no-commit
-
+	forge install
 # Build contracts
 build:
 	forge build
