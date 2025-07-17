@@ -1,0 +1,301 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - lcov.info - src/MyswapV2Pair.sol</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">src</a> - MyswapV2Pair.sol<span style="font-size: 80%;"> (source / <a href="MyswapV2Pair.sol.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">lcov.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">113</td>
+            <td class="headerCovTableEntry">113</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2025-07-11 06:15:13</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntry">14</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: MIT</a>
+<a name="2"><span class="lineNum">       2 </span>            : pragma solidity ^0.8.26;</a>
+<a name="3"><span class="lineNum">       3 </span>            : </a>
+<a name="4"><span class="lineNum">       4 </span>            : import {IMyswapV2Pair} from &quot;./interfaces/IMyswapV2Pair.sol&quot;;</a>
+<a name="5"><span class="lineNum">       5 </span>            : import {MyswapV2ERC20} from &quot;./MyswapV2ERC20.sol&quot;;</a>
+<a name="6"><span class="lineNum">       6 </span>            : import {IERC20} from &quot;@openzeppelin-contracts/contracts/token/ERC20/IERC20.sol&quot;;</a>
+<a name="7"><span class="lineNum">       7 </span>            : import {IMyswapV2Factory} from &quot;./interfaces/IMyswapV2Factory.sol&quot;;</a>
+<a name="8"><span class="lineNum">       8 </span>            : import {IMyswapV2Callee} from &quot;./interfaces/IMyswapV2Callee.sol&quot;;</a>
+<a name="9"><span class="lineNum">       9 </span>            : </a>
+<a name="10"><span class="lineNum">      10 </span>            : import {Math} from &quot;@openzeppelin-contracts/contracts/utils/math/Math.sol&quot;;</a>
+<a name="11"><span class="lineNum">      11 </span>            : /**</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * @title Modern UniswapV2 Rewrite | 现代uniswapv2重写</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * @author @zhouhangmyers | 周航</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * @notice A complete reimplementation of the Uniswap V2 protocol using Solidity ^0.8.26.| 一个使用Solidity ^0.8.26完全重新实现的Uniswap V2协议。</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * @dev This project is independently written from scratch without forking the original codebase. | 该项目完全独立编写，未从原始代码库进行分支。</a>
+<a name="16"><span class="lineNum">      16 </span>            :  */</a>
+<a name="17"><span class="lineNum">      17 </span>            : </a>
+<a name="18"><span class="lineNum">      18 </span>            : contract MyswapV2Pair is IMyswapV2Pair, MyswapV2ERC20 {</a>
+<a name="19"><span class="lineNum">      19 </span>            :     using Math for uint256;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            :     uint256 public constant MINIMUM_LIQUIDITY = 10 ** 3;</a>
+<a name="22"><span class="lineNum">      22 </span>            :     bytes4 private constant SELECTOR = bytes4(keccak256(abi.encodePacked(&quot;transfer(address,uint256)&quot;)));</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            :     address public factory;</a>
+<a name="25"><span class="lineNum">      25 </span>            :     address public token0;</a>
+<a name="26"><span class="lineNum">      26 </span>            :     address public token1;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            :     uint112 private reserve0;</a>
+<a name="29"><span class="lineNum">      29 </span>            :     uint112 private reserve1;</a>
+<a name="30"><span class="lineNum">      30 </span>            :     uint32 private blockTimestampLast;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            :     uint256 public price0CumulativeLast;</a>
+<a name="33"><span class="lineNum">      33 </span>            :     uint256 public price1CumulativeLast;</a>
+<a name="34"><span class="lineNum">      34 </span>            :     uint256 public kLast;</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            :     uint256 private unlocked = 1;</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineCov">         60 :     constructor() {</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineCov">         60 :         factory = msg.sender;</span></a>
+<a name="40"><span class="lineNum">      40 </span>            :     }</a>
+<a name="41"><span class="lineNum">      41 </span>            : </a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">         27 :     modifier lock() {</span></a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">         27 :         require(unlocked == 1, &quot;myswapV2: LOCKED&quot;);</span></a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">         27 :         unlocked = 0;</span></a>
+<a name="45"><span class="lineNum">      45 </span>            :         _;</a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">         22 :         unlocked = 1;</span></a>
+<a name="47"><span class="lineNum">      47 </span>            :     }</a>
+<a name="48"><span class="lineNum">      48 </span>            : </a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">         61 :     function initialize(address _token0, address _token1) external {</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">         61 :         require(msg.sender == factory, &quot;MyswapV2: FORBIDDEN&quot;);</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">         60 :         token0 = _token0;</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">         60 :         token1 = _token1;</span></a>
+<a name="53"><span class="lineNum">      53 </span>            :     }</a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">         94 :     function getReserves() public view returns (uint112 _reserve0, uint112 _reserve1, uint32 _blockTimestampLast) {</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">        201 :         _reserve0 = reserve0;</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">        201 :         _reserve1 = reserve1;</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">        201 :         _blockTimestampLast = blockTimestampLast;</span></a>
+<a name="59"><span class="lineNum">      59 </span>            :     }</a>
+<a name="60"><span class="lineNum">      60 </span>            : </a>
+<a name="61"><span class="lineNum">      61 </span>            :     /*//////////////////////////////////////////////////////////////</a>
+<a name="62"><span class="lineNum">      62 </span>            :                         MINT BURN SWAP SKIM SYNC</a>
+<a name="63"><span class="lineNum">      63 </span>            :     //////////////////////////////////////////////////////////////*/</a>
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">         69 :     function mint(address to) external lock returns (uint256 liquidity) {</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">         68 :         (uint112 _reserve0, uint112 _reserve1,) = getReserves();</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">         68 :         uint256 balance0 = IERC20(token0).balanceOf(address(this));</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">         68 :         uint256 balance1 = IERC20(token1).balanceOf(address(this));</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">         68 :         uint256 amount0 = balance0 - _reserve0;</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">         68 :         uint256 amount1 = balance1 - _reserve1;</span></a>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">         68 :         bool feeOn = _mintFee(_reserve0, _reserve1);</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">         68 :         uint256 _totalSupply = totalSupply;</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">         68 :         if (_totalSupply == 0) {</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">         47 :             liquidity = Math.sqrt(amount0 * amount1) - MINIMUM_LIQUIDITY;</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">         46 :             _mint(address(0), MINIMUM_LIQUIDITY);</span></a>
+<a name="77"><span class="lineNum">      77 </span>            :         } else {</a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">         21 :             liquidity = Math.min(amount0 * _totalSupply / _reserve0, amount1 * totalSupply / _reserve1);</span></a>
+<a name="79"><span class="lineNum">      79 </span>            :         }</a>
+<a name="80"><span class="lineNum">      80 </span>            :         //require(liquidity &gt; 0) 的作用是</a>
+<a name="81"><span class="lineNum">      81 </span>            :         //1.防止在初始阶段创建无意义的、极小规模的流动性池</a>
+<a name="82"><span class="lineNum">      82 </span>            :         //2.保护用户在向大型池添加“粉尘”级别的流动性时，不会因为计算精度问题而白白浪费Gas费</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">         67 :         require(liquidity &gt; 0, &quot;MyswapV2: INSUFFICIENT_LIQUIDITY_MINTED&quot;);</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         65 :         _mint(to, liquidity);</span></a>
+<a name="85"><span class="lineNum">      85 </span>            : </a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">         65 :         _update(balance0, balance1, _reserve0, _reserve1);</span></a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span>            :         ////////////////////////////////////////////////重点//////////////////////</a>
+<a name="89"><span class="lineNum">      89 </span>            :         //我之前写的uint256(reserve0*reserve1)是错误的，uint112*uint112已经溢出</a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">          4 :         if (feeOn) kLast = uint256(reserve0) * uint256(reserve1);</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">         64 :         emit Mint(msg.sender, amount0, amount1);</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :     }</a>
+<a name="93"><span class="lineNum">      93 </span>            : </a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">         13 :     function burn(address to) external lock returns (uint256 amount0, uint256 amount1) {</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">         13 :         (uint112 _reserve0, uint112 _reserve1,) = getReserves();</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">         13 :         address _token0 = token0;</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">         13 :         address _token1 = token1;</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">         13 :         uint256 balance0 = IERC20(_token0).balanceOf(address(this));</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">         13 :         uint256 balance1 = IERC20(_token1).balanceOf(address(this));</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">         13 :         uint256 liquidity = balanceOf[address(this)];</span></a>
+<a name="101"><span class="lineNum">     101 </span>            : </a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">         13 :         bool feeOn = _mintFee(_reserve0, _reserve1);</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">         13 :         uint256 _totalSupply = totalSupply;</span></a>
+<a name="104"><span class="lineNum">     104 </span>            : </a>
+<a name="105"><span class="lineNum">     105 </span>            :         //balance 代表了池子“当前真实的总资产”，而 reserve 仅仅是“上一次结算时的资产快照”。它们之间的差值，就是这段时间累积的交易手续费。使用 balance 是为了确保流动性提供者（LP）在退出时，能公平地按比例分走他们应得的本金 + 手续费。</a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">         13 :         amount0 = liquidity * balance0 / _totalSupply;</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">         13 :         amount1 = liquidity * balance1 / _totalSupply;</span></a>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">         13 :         require(amount0 &gt; 0 &amp;&amp; amount1 &gt; 0, &quot;MyswapV2: INSUFFICIENT_LIQUIDITY_BURND&quot;);</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">         12 :         _burn(address(this), liquidity);</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">         12 :         _safeTransfer(_token0, to, amount0);</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">         12 :         _safeTransfer(_token1, to, amount1);</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">         11 :         balance0 = IERC20(_token0).balanceOf(address(this));</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">         11 :         balance1 = IERC20(_token1).balanceOf(address(this));</span></a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">         11 :         _update(balance0, balance1, _reserve0, _reserve1);</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">          2 :         if (feeOn) kLast = uint256(reserve0) * reserve1;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">         11 :         emit Burn(msg.sender, amount0, amount1, to);</span></a>
+<a name="119"><span class="lineNum">     119 </span>            :     }</a>
+<a name="120"><span class="lineNum">     120 </span>            : </a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">         27 :     function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external lock {</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">         27 :         require(amount0Out &gt; 0 || amount1Out &gt; 0, &quot;MyswapV2: INSUFFICIENT_OUTPUT_AMOUNT&quot;);</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">         26 :         (uint112 _reserve0, uint112 _reserve1,) = getReserves();</span></a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineCov">         26 :         require(amount0Out &lt; _reserve0 &amp;&amp; amount1Out &lt; _reserve1, &quot;MyswapV2: INSUFFICIENT_LIQUIDITY&quot;);</span></a>
+<a name="125"><span class="lineNum">     125 </span>            : </a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">         25 :         uint256 balance0;</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">         25 :         uint256 balance1;</span></a>
+<a name="128"><span class="lineNum">     128 </span>            :         {</a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">         25 :             address _token0 = token0;</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">         25 :             address _token1 = token1;</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">         25 :             require(to != _token0 &amp;&amp; to != _token1, &quot;MyswapV2: INVALID_TO&quot;);</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">         24 :             if (amount0Out &gt; 0) _safeTransfer(_token0, to, amount0Out);</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">         24 :             if (amount1Out &gt; 0) _safeTransfer(_token1, to, amount1Out);</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">         24 :             if (data.length &gt; 0) IMyswapV2Callee(to).myswapV2Call(msg.sender, amount0Out, amount1Out, data);</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">         24 :             balance0 = IERC20(_token0).balanceOf(address(this));</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">         24 :             balance1 = IERC20(_token1).balanceOf(address(this));</span></a>
+<a name="137"><span class="lineNum">     137 </span>            :         }</a>
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<a name="139"><span class="lineNum">     139 </span>            :         // balance0 : 当前合约地址里实实在在的代币余额</a>
+<a name="140"><span class="lineNum">     140 </span>            :         // _reserve0: 上次状态同步时记录的资产快照</a>
+<a name="141"><span class="lineNum">     141 </span>            :         //balance0 和 _reserve0之间的差值，主要是这段时间累积的交易手续费。</a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span>            :         //换句话说用户用token0 换 token1，理论上要额外手续费的部分，然后balance0是增加的,amount0Out为0，所以公式成立。这时token1是要发送出去的，balance1是实时的，所以balance1==上一次快照的数量-发送出去的数量，amount1In = 0;</a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">         24 :         uint256 amount0In = balance0 &gt; _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">         24 :         uint256 amount1In = balance1 &gt; _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">         24 :         require(amount0In &gt; 0 || amount1In &gt; 0, &quot;MyswapV2: INSUFFICIENT_INPUT_AMOUNT&quot;);</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :         {</a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">         23 :             uint256 balance0Adjusted = balance0 * 1000 - amount0In * 3;</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">         23 :             uint256 balance1Adjusted = balance1 * 1000 - amount1In * 3;</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">         23 :             require(balance0Adjusted * balance1Adjusted &gt;= uint256(_reserve0) * _reserve1 * 1000 ** 2, &quot;MyswapV2: K&quot;);</span></a>
+<a name="151"><span class="lineNum">     151 </span>            :         }</a>
+<a name="152"><span class="lineNum">     152 </span>            : </a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">         22 :         _update(balance0, balance1, _reserve0, _reserve1);</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">         22 :         emit Swap(msg.sender, amount0In, amount1Out, amount0Out, amount1Out, to);</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :     }</a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">          1 :     function skim(address to) external lock {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">          1 :         address _token0 = token0; // gas savings</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">          1 :         address _token1 = token1; // gas savings</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">          1 :         _safeTransfer(_token0, to, IERC20(_token0).balanceOf(address(this)) - reserve0);</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">          1 :         _safeTransfer(_token1, to, IERC20(_token1).balanceOf(address(this)) - reserve1);</span></a>
+<a name="162"><span class="lineNum">     162 </span>            :     }</a>
+<a name="163"><span class="lineNum">     163 </span>            : </a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">          4 :     function sync() external lock {</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">          4 :         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);</span></a>
+<a name="166"><span class="lineNum">     166 </span>            :     }</a>
+<a name="167"><span class="lineNum">     167 </span>            : </a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">         51 :     function _safeTransfer(address token, address to, uint256 amount) private {</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">         51 :         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, to, amount));</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">         51 :         require(success &amp;&amp; (data.length == 0 || abi.decode(data, (bool))), &quot;MyswapV2: TRANSFER_FAILED&quot;);</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :     }</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">          2 :     function encode(uint112 y) private pure returns (uint224 z) {</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">          2 :         z = uint224(y) * 2 ** 112;</span></a>
+<a name="175"><span class="lineNum">     175 </span>            :     }</a>
+<a name="176"><span class="lineNum">     176 </span>            : </a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">          2 :     function updiv(uint224 x, uint112 y) private pure returns (uint224 z) {</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">          2 :         z = x / uint224(y);</span></a>
+<a name="179"><span class="lineNum">     179 </span>            :     }</a>
+<a name="180"><span class="lineNum">     180 </span>            : </a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">        102 :     function _update(uint256 balance0, uint256 balance1, uint112 _reserve0, uint112 _reserve1) private {</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">        102 :         require(balance0 &lt;= type(uint112).max &amp;&amp; balance1 &lt;= type(uint112).max, &quot;MyswapV2: OVERFLOW&quot;);</span></a>
+<a name="183"><span class="lineNum">     183 </span>            :         //先取模，再截断，让时间戳每过2的32次方秒，约等于136年，归0重新计算。</a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">        101 :         uint32 blockTimestamp = uint32(block.timestamp % 2 ** 32);</span></a>
+<a name="185"><span class="lineNum">     185 </span>            : </a>
+<a name="186"><span class="lineNum">     186 </span>            :         unchecked {</a>
+<a name="187"><span class="lineNum">     187 </span>            :             //允许溢出是为了计算差值，这是可行的</a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">        101 :             uint32 timeElapsed = blockTimestamp - blockTimestampLast;</span></a>
+<a name="189"><span class="lineNum">     189 </span>            : </a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">        101 :             if (timeElapsed &gt; 0 &amp;&amp; _reserve0 != 0 &amp;&amp; _reserve1 != 0) {</span></a>
+<a name="191"><span class="lineNum">     191 </span>            :                 //注意：这一块使用了定点112*112的格式，为了防止精度问题，多乘以了2**112的值，在前端时计算TWAP需要/2**112</a>
+<a name="192"><span class="lineNum">     192 </span>            :                 //这也是允许溢出的，也是为了计算price0Cumulative 与 price0CumulativeLast之间的价格差</a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">          1 :                 price0CumulativeLast += uint256(updiv(encode(_reserve1), reserve0)) * timeElapsed;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">          1 :                 price1CumulativeLast += uint256(updiv(encode(_reserve0), reserve1)) * timeElapsed;</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :             }</a>
+<a name="196"><span class="lineNum">     196 </span>            :         }</a>
+<a name="197"><span class="lineNum">     197 </span>            : </a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        101 :         reserve0 = uint112(balance0);</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">        101 :         reserve1 = uint112(balance1);</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">        101 :         blockTimestampLast = blockTimestamp;</span></a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">        101 :         emit Sync(reserve0, reserve1);</span></a>
+<a name="202"><span class="lineNum">     202 </span>            :     }</a>
+<a name="203"><span class="lineNum">     203 </span>            : </a>
+<a name="204"><span class="lineNum">     204 </span>            :     //_mintFee的作用是，判断协议是否开启收手续费功能，如果没有开启，就判断有没有保存上一次的底池资产，如果有，就清0，如果不清0，会导致开启协议受手续费的时候，将当前底池的资产减去保留的这个底池资产，如果大于0，会导致灾难性结果，这个值的1/6会铸造成LPtoken给协议，这是灾难性的。我们要知道这个1/6的LPtoken铸造是每当有人触发添加或移除流动性函数时，会优先处理sqrt(kLast)(上一次添加/移除流动性后记录的交易对资产)与当前交易对资产sqrt(reserve0*reserve1)之间的差值，如果后者大于前者，就铸造totalSupply*这个差值/(5sqrt(reserve0*reserve1)+sqrt(kLast))数量的Lptoken给协议方</a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         81 :     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">         81 :         address feeTo = IMyswapV2Factory(factory).feeTo();</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">         81 :         feeOn = feeTo != address(0);</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">         81 :         uint256 _kLast = kLast;</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">          6 :         if (feeOn) {</span></a>
+<a name="210"><span class="lineNum">     210 </span>            :             //如果开启收费，并且_KLast不为空，表示这是自开启收费后第二次起添加流动性就开始收费，</a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">          6 :             if (_kLast != 0) {</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">          3 :                 uint256 rootK = Math.sqrt(uint256(_reserve0) * _reserve1);</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">          3 :                 uint256 rootkLast = Math.sqrt(_kLast);</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">          3 :                 if (rootK &gt; rootkLast) {</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">          1 :                     uint256 numerator = totalSupply * (rootK - rootkLast);</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">          1 :                     uint256 denominator = rootK * 5 + rootkLast;</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">          1 :                     uint256 liquidity = numerator / denominator;</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">          1 :                     if (liquidity &gt; 0) _mint(feeTo, liquidity);</span></a>
+<a name="219"><span class="lineNum">     219 </span>            :                 }</a>
+<a name="220"><span class="lineNum">     220 </span>            :             }</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">         75 :         } else if (_kLast != 0) {</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">          1 :             kLast = 0;</span></a>
+<a name="223"><span class="lineNum">     223 </span>            :         }</a>
+<a name="224"><span class="lineNum">     224 </span>            :     }</a>
+<a name="225"><span class="lineNum">     225 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

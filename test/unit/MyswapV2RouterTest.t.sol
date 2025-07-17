@@ -216,11 +216,11 @@ contract MyswapV2RouterTest is Test {
         (address pair) = factory.getPair(address(token1), address(token2));
         (uint256 liquidity) = IMyswapV2ERC20(pair).balanceOf(user1);
         IMyswapV2ERC20(pair).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_A_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_A_AMOUNT");
         router.removeLiquidity(
             address(token1), address(token2), liquidity, type(uint256).max, 0, user1, block.timestamp + 100
         );
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_B_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_B_AMOUNT");
         router.removeLiquidity(
             address(token1), address(token2), liquidity, 0, type(uint256).max, user1, block.timestamp + 100
         );
@@ -435,7 +435,7 @@ contract MyswapV2RouterTest is Test {
         path[1] = address(token2);
 
         ERC20Mock(path[0]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactTokensForTokens(10 * TOKEN_PRECISION, type(uint256).max, path, user1, block.timestamp + 10);
 
         vm.stopPrank();
@@ -466,7 +466,7 @@ contract MyswapV2RouterTest is Test {
         path[1] = address(token2);
 
         ERC20Mock(path[path.length - 1]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         router.swapTokensForExactTokens(5 * TOKEN_PRECISION, 0, path, user1, block.timestamp + 100);
 
         vm.stopPrank();
@@ -491,11 +491,11 @@ contract MyswapV2RouterTest is Test {
         address[] memory path = new address[](2);
         path[0] = address(token2);
         path[1] = address(token1);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapExactETHForTokens{value: 1 * TOKEN_PRECISION}(0, path, user1, block.timestamp + 10);
 
         path[0] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactETHForTokens{value: 1 * TOKEN_PRECISION}(type(uint256).max, path, user1, block.timestamp + 10);
         vm.stopPrank();
     }
@@ -521,10 +521,10 @@ contract MyswapV2RouterTest is Test {
         path[0] = address(token1);
         path[1] = address(token2);
         ERC20Mock(path[0]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapTokensForExactETH(1 * TOKEN_PRECISION, 3 * TOKEN_PRECISION, path, user1, block.timestamp + 10);
         path[1] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         router.swapTokensForExactETH(1 * TOKEN_PRECISION, 0, path, user1, block.timestamp + 10);
         vm.stopPrank();
     }
@@ -551,10 +551,10 @@ contract MyswapV2RouterTest is Test {
         path[0] = address(token1);
         path[1] = address(token2);
         ERC20Mock(path[0]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapExactTokensForETH(1 * TOKEN_PRECISION, 0, path, user1, block.timestamp + 10);
         path[1] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactTokensForETH(1 * TOKEN_PRECISION, type(uint256).max, path, user1, block.timestamp + 10);
         vm.stopPrank();
     }
@@ -579,10 +579,10 @@ contract MyswapV2RouterTest is Test {
         address[] memory path = new address[](2);
         path[0] = address(token2);
         path[1] = address(token1);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapETHForExactTokens{value: 2 * TOKEN_PRECISION}(1 * TOKEN_PRECISION, path, user1, block.timestamp + 10);
         path[0] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         router.swapETHForExactTokens(1 * TOKEN_PRECISION, path, user1, block.timestamp + 10);
         vm.stopPrank();
     }
@@ -614,7 +614,7 @@ contract MyswapV2RouterTest is Test {
         path[0] = address(token1);
         path[1] = address(token2);
         ERC20Mock(path[0]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactTokensForTokensSupportingFeeOnTransferTokens(
             10 * TOKEN_PRECISION, type(uint).max, path, user1, block.timestamp + 10
         );
@@ -645,12 +645,12 @@ contract MyswapV2RouterTest is Test {
         address[] memory path = new address[](2);
         path[0] = address(token2);
         path[1] = address(token1);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: 1 * TOKEN_PRECISION}(
             0, path, user1, block.timestamp
         );
         path[0] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: 1 * TOKEN_PRECISION}(
             type(uint256).max, path, user1, block.timestamp
         );
@@ -684,12 +684,12 @@ contract MyswapV2RouterTest is Test {
         path[0] = address(token1);
         path[1] = address(token2);
         ERC20Mock(path[0]).approve(address(router), type(uint256).max);
-        vm.expectRevert("UniswapV2Router: INVALID_PATH");
+        vm.expectRevert("MyswapV2Router: INVALID_PATH");
         router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             1 * TOKEN_PRECISION, 0, path, user1, block.timestamp + 10
         );
         path[1] = payable(address(weth));
-        vm.expectRevert("UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        vm.expectRevert("MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         router.swapExactTokensForETHSupportingFeeOnTransferTokens(
             1 * TOKEN_PRECISION, type(uint256).max, path, user1, block.timestamp + 10
         );
@@ -882,7 +882,7 @@ contract MyswapV2RouterTest is Test {
 
     function test_revert_getAmountIn_zero_liquidity() external {
         MyswapV2LibraryHelper helper = new MyswapV2LibraryHelper();
-        vm.expectRevert("UniswapV2Library: INSUFFICIENT_LIQUIDITY");
+        vm.expectRevert("MyswapV2Library: INSUFFICIENT_LIQUIDITY");
         helper.callGetAmountIn(1, 0, 0);
     }
 

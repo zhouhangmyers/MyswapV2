@@ -119,8 +119,8 @@ contract MyswapV2Router {
         (uint256 amount0, uint256 amount1) = IMyswapV2Pair(pair).burn(to);
         (address token0,) = MyswapV2Library.sortTokens(tokenA, tokenB);
         (amountA, amountB) = token0 == tokenA ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, "UniswapV2Router: INSUFFICIENT_A_AMOUNT");
-        require(amountB >= amountBMin, "UniswapV2Router: INSUFFICIENT_B_AMOUNT");
+        require(amountA >= amountAMin, "MyswapV2Router: INSUFFICIENT_A_AMOUNT");
+        require(amountB >= amountBMin, "MyswapV2Router: INSUFFICIENT_B_AMOUNT");
     }
 
     function removeLiquidityETH(
@@ -229,7 +229,7 @@ contract MyswapV2Router {
         uint256 deadline
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
         amounts = MyswapV2Library.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -244,7 +244,7 @@ contract MyswapV2Router {
         uint256 deadline
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, "MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -258,9 +258,9 @@ contract MyswapV2Router {
         ensure(deadline)
         returns (uint256[] memory amounts)
     {
-        require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[0] == WETH, "MyswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsOut(factory, msg.value, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -273,9 +273,9 @@ contract MyswapV2Router {
         address to,
         uint256 deadline
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[path.length - 1] == WETH, "MyswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= amountInMax, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= amountInMax, "MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -291,9 +291,9 @@ contract MyswapV2Router {
         address to,
         uint256 deadline
     ) external virtual ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[path.length - 1] == WETH, "MyswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsOut(factory, amountIn, path);
-        require(amounts[amounts.length - 1] >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amounts[amounts.length - 1] >= amountOutMin, "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]
         );
@@ -309,9 +309,9 @@ contract MyswapV2Router {
         ensure(deadline)
         returns (uint256[] memory amounts)
     {
-        require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[0] == WETH, "MyswapV2Router: INVALID_PATH");
         amounts = MyswapV2Library.getAmountsIn(factory, amountOut, path);
-        require(amounts[0] <= msg.value, "UniswapV2Router: EXCESSIVE_INPUT_AMOUNT");
+        require(amounts[0] <= msg.value, "MyswapV2Router: EXCESSIVE_INPUT_AMOUNT");
         IWETH(WETH).deposit{value: amounts[0]}();
         assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amounts[0]));
         _swap(amounts, path, to);
@@ -356,7 +356,7 @@ contract MyswapV2Router {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - (balanceBefore) >= amountOutMin,
-            "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
+            "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
         );
     }
 
@@ -366,7 +366,7 @@ contract MyswapV2Router {
         address to,
         uint256 deadline
     ) external payable virtual ensure(deadline) {
-        require(path[0] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[0] == WETH, "MyswapV2Router: INVALID_PATH");
         uint256 amountIn = msg.value;
         IWETH(WETH).deposit{value: amountIn}();
         assert(IWETH(WETH).transfer(MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn));
@@ -374,7 +374,7 @@ contract MyswapV2Router {
         _swapSupportingFeeOnTransferTokens(path, to);
         require(
             IERC20(path[path.length - 1]).balanceOf(to) - (balanceBefore) >= amountOutMin,
-            "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
+            "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT"
         );
     }
 
@@ -385,13 +385,13 @@ contract MyswapV2Router {
         address to,
         uint256 deadline
     ) external virtual ensure(deadline) {
-        require(path[path.length - 1] == WETH, "UniswapV2Router: INVALID_PATH");
+        require(path[path.length - 1] == WETH, "MyswapV2Router: INVALID_PATH");
         SafeTransferLib.safeTransferFrom(
             IERC20(path[0]), msg.sender, MyswapV2Library.pairFor(factory, path[0], path[1]), amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
         uint256 amountOut = IERC20(WETH).balanceOf(address(this));
-        require(amountOut >= amountOutMin, "UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
+        require(amountOut >= amountOutMin, "MyswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT");
         IWETH(WETH).withdraw(amountOut);
         SafeTransferLib.safeTransferETH(to, amountOut);
     }

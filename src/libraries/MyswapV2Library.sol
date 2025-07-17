@@ -73,7 +73,7 @@ library MyswapV2Library {
         returns (uint256 amountIn)
     {
         require(amountOut > 0, "MyswapV2Library: INSUFFICENT_OUTPUT_AMOUNT");
-        require(reserveIn > 0 && reserveOut > 0, "UniswapV2Library: INSUFFICIENT_LIQUIDITY");
+        require(reserveIn > 0 && reserveOut > 0, "MyswapV2Library: INSUFFICIENT_LIQUIDITY");
         uint256 numerator = reserveIn * amountOut * 1000;
         uint256 denominator = (reserveOut - amountOut) * 997;
         amountIn = numerator / denominator + 1;
